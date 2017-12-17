@@ -1,8 +1,11 @@
+// 命令行工具引入
 var program = require('commander');
 var packageJson = require('./package.json');
 var Logger = require('./logger.js');
+// 读取配置文件
 var appConfig = require("./config.json");
 var genesisblock = require('./genesisBlock.json');
+// async流程管理组件
 var async = require('async');
 var extend = require('extend');
 var path = require('path');
@@ -16,6 +19,7 @@ process.stdin.resume();
 
 var versionBuild = fs.readFileSync(path.join(__dirname, 'build'), 'utf8');
 
+// 命令行工具配置
 program
 	.version(packageJson.version)
 	.option('-c, --config <path>', 'Config file path')
@@ -62,6 +66,7 @@ if (program.log) {
 	appConfig.consoleLogLevel = program.log;
 }
 
+// 使用uncaughtException捕获异常，当 Node 发现一个未捕获的异常时，会触发这个事件。并且如果这个事件存在回调函数，Node 就不会强制结束进程。
 process.on('uncaughtException', function (err) {
 	// handle the error safely
 	logger.fatal('System error', { message: err.message, stack: err.stack });
@@ -93,13 +98,16 @@ var config = {
 
 var logger = new Logger({echo: appConfig.consoleLogLevel, errorLevel: appConfig.fileLogLevel});
 
+// 使用domain，可以用来捕获回调函数中抛出的异常
 var d = require('domain').create();
 d.on('error', function (err) {
 	logger.fatal('Domain master', { message: err.message, stack: err.stack });
+	// process.exit(0)表示成功完成，回调函数中，err将为null,process.exit(非0)表示执行失败，回调函数中，err不为null，err.code就是我们传给exit的数字。
 	process.exit(0);
 });
 d.run(function () {
 	var modules = [];
+	// async.auto表示顺序调用
 	async.auto({
 		config: function (cb) {
 			if (appConfig.dapp.masterrequired && !appConfig.dapp.masterpassword) {
@@ -213,11 +221,14 @@ d.run(function () {
 		},
 
 		network: ['config', function (cb, scope) {
+			// 引入express，并且实例化
 			var express = require('express');
 			var app = express();
 			var server = require('http').createServer(app);
+			// 引入socket.io
 			var io = require('socket.io')(server);
 
+			// 进行https配置
 			if (scope.config.ssl.enabled) {
 				var privateKey = fs.readFileSync(scope.config.ssl.options.key);
 				var certificate = fs.readFileSync(scope.config.ssl.options.cert);
@@ -426,6 +437,7 @@ d.run(function () {
 					});
 				}
 			});
+			// async.parallel表示并行运行
 			async.parallel(tasks, function (err, results) {
 				cb(err, results);
 			});
@@ -443,6 +455,7 @@ d.run(function () {
 
 			process.once('cleanup', function () {
 				scope.logger.info("Cleaning up...");
+				// async.eachSeries 对程序进行清理工作
 				async.eachSeries(modules, function (module, cb) {
 					if (typeof(module.cleanup) == 'function'){
 						module.cleanup(cb);
