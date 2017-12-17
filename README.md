@@ -34,3 +34,7 @@ Copyright (c) 2014-2015 Crypti
 
 
 [《Nodejs开发加密货币》]: https://github.com/imfly/bitcoin-on-nodejs
+
+## 注解
+
+yyhaxx@163.com
