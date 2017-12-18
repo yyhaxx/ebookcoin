@@ -478,8 +478,8 @@ shared.getPeer = function (req, cb) {
 		}
 
 		privated.getByFilter({
-			ip: ip_str,
-			port: port
+			ip: query.ip_str,
+			port: query.port
 		}, function (err, peers) {
 			if (err) {
 				return cb("Peer not found");

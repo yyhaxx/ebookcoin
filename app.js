@@ -281,13 +281,16 @@ d.run(function () {
 		connect: ['config', 'public', 'genesisblock', 'logger', 'build', 'network', function (cb, scope) {
 			var path = require('path');
 			var bodyParser = require('body-parser');
+			// 为bodyParser中间件提供伪HTTP方法支持如put，delete
 			var methodOverride = require('method-override');
 			var requestSanitizer = require('./helpers/request-sanitizer');
 			var queryParser = require('express-query-int');
 
+			// 使用ejs模板
 			scope.network.app.engine('html', require('ejs').renderFile);
 			scope.network.app.use(require('express-domain-middleware'));
 			scope.network.app.set('view engine', 'ejs');
+			// 设置静态文件路径为public
 			scope.network.app.set('views', path.join(__dirname, 'public'));
 			scope.network.app.use(scope.network.express.static(path.join(__dirname, 'public')));
 			scope.network.app.use(bodyParser.urlencoded({extended: true, parameterLimit: 5000}));
